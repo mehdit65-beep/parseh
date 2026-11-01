@@ -40,6 +40,7 @@ class ImportTests(unittest.TestCase):
 
     def test_normalize(self):
         self.assertEqual(prepare.normalize(' كِتابِ\u200cيـار  '), 'کتاب یار')
+        self.assertEqual(prepare.normalize('آسان، إِنسان!'), 'اسان انسان')
 
     def test_empty_source_entry_is_preserved_and_reported(self):
         with tempfile.TemporaryDirectory() as directory:

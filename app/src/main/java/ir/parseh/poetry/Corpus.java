@@ -29,7 +29,7 @@ final class Corpus {
         return rows;
     }
     static String normalize(String s) {
-        return s.replace('ي','ی').replace('ى','ی').replace('ك','ک').replace('\u200c',' ').replace("ـ", "").replaceAll("[\u064b-\u065f\u0670]", "").replaceAll("\\s+"," ").trim();
+        return s.replace('ي','ی').replace('ى','ی').replace('ك','ک').replace('آ','ا').replace('أ','ا').replace('إ','ا').replace('ٱ','ا').replace('\u200c',' ').replace("ـ", "").replaceAll("[\u064b-\u065f\u0670]", "").replaceAll("[^\\p{L}\\p{N}_\\s]", " ").replaceAll("\\s+"," ").trim();
     }
     static String match(String s) {
         StringBuilder b = new StringBuilder();

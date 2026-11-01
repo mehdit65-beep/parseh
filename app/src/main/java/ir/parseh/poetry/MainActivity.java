@@ -15,6 +15,7 @@ import java.util.*;
 import java.util.concurrent.*;
 
 public class MainActivity extends Activity {
+    @Override protected void attachBaseContext(Context base){android.content.res.Configuration configuration=new android.content.res.Configuration(base.getResources().getConfiguration());Locale persian=new Locale("fa");configuration.setLocale(persian);configuration.setLayoutDirection(persian);super.attachBaseContext(base.createConfigurationContext(configuration));}
     final ExecutorService worker = Executors.newSingleThreadExecutor();
     final Handler main = new Handler(Looper.getMainLooper());
     Corpus corpus; LinearLayout root, content, bar; Typeface font;

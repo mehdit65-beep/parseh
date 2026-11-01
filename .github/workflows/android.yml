@@ -99,6 +99,21 @@ jobs:
           cp parseh-home.png dist/
           sha256sum dist/parseh-preview.apk > dist/SHA256SUMS
           du -h dist/parseh-preview.apk
+      - name: Report Android test failures
+        if: always()
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import xml.etree.ElementTree as E
+          for p in Path('app/build/outputs/androidTest-results').rglob('*.xml'):
+              try:
+                  root = E.parse(p).getroot()
+                  for case in root.iter('testcase'):
+                      for failure in case.findall('failure'):
+                          print(case.attrib, failure.attrib, failure.text)
+              except E.ParseError:
+                  pass
+          PY
       - name: Publish downloadable preview
         env:
           GH_TOKEN: ${{ github.token }}

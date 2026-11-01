@@ -10,8 +10,9 @@ from pathlib import Path
 
 
 def normalize(text):
-    text = text.translate(str.maketrans({'ي': 'ی', 'ى': 'ی', 'ك': 'ک', '\u200c': ' ', 'ـ': ''}))
-    return re.sub(r'\s+', ' ', re.sub('[\u064b-\u065f\u0670]', '', text)).strip()
+    text = text.translate(str.maketrans({'ي': 'ی', 'ى': 'ی', 'ك': 'ک', '\u200c': ' ', 'ـ': '', 'آ': 'ا', 'أ': 'ا', 'إ': 'ا', 'ٱ': 'ا'}))
+    text = re.sub('[\u064b-\u065f\u0670]', '', text)
+    return re.sub(r'\s+', ' ', re.sub(r'[^\w\s]', ' ', text)).strip()
 
 
 def check_database(db):
@@ -38,7 +39,7 @@ def build(source, output, strict=True):
         CREATE TABLE poets(id INTEGER PRIMARY KEY, name TEXT NOT NULL, slug TEXT UNIQUE NOT NULL);
         CREATE TABLE categories(id INTEGER PRIMARY KEY, poet INTEGER NOT NULL, parent INTEGER, title TEXT NOT NULL);
         CREATE TABLE poems(id INTEGER PRIMARY KEY, poet INTEGER NOT NULL, category INTEGER NOT NULL, title TEXT NOT NULL, body TEXT NOT NULL, url TEXT NOT NULL, source TEXT NOT NULL);
-        CREATE VIRTUAL TABLE search USING fts4(title,body,content='',tokenize=unicode61);
+        CREATE VIRTUAL TABLE search USING fts4(title,body,content='',tokenize=simple);
         CREATE INDEX category_poet ON categories(poet,parent);
         CREATE INDEX poem_category ON poems(category,id);
     ''')

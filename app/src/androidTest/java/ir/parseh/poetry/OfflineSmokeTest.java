@@ -7,6 +7,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Typeface;
 import android.net.Uri;
 import androidx.test.core.app.ApplicationProvider;
+import androidx.test.core.app.ActivityScenario;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import org.json.JSONObject;
 import org.junit.Test;
@@ -26,10 +27,17 @@ public class OfflineSmokeTest {
             while((n=in.read(buffer))!=-1)out.write(buffer,0,n);
             version=new JSONObject(out.toString("UTF-8"));
         }
-        assertEquals(version.getInt("poems"),Integer.parseInt(corpus.query("SELECT count(*) FROM poems").get(0)[0]));
-        assertEquals(version.getInt("poets"),Integer.parseInt(corpus.query("SELECT count(*) FROM poets").get(0)[0]));
-        assertFalse(corpus.query("SELECT docid FROM search WHERE search MATCH ? LIMIT 1",Corpus.match("عشق آسان")).isEmpty());
+        assertEquals("Poem count",version.getInt("poems"),Integer.parseInt(corpus.query("SELECT count(*) FROM poems").get(0)[0]));
+        assertEquals("Poet count",version.getInt("poets"),Integer.parseInt(corpus.query("SELECT count(*) FROM poets").get(0)[0]));
+        assertFalse("Single-word search failed",corpus.query("SELECT docid FROM search WHERE search MATCH ? LIMIT 1",Corpus.match("عشق")).isEmpty());
+        String query=Corpus.match("عشق آسان");
+        assertFalse("Offline index returned no matches for "+query,corpus.query("SELECT docid FROM search WHERE search MATCH ? LIMIT 1",query).isEmpty());
         assertFalse(corpus.query("SELECT body FROM poems WHERE id=?","2130").get(0)[0].isEmpty());
+    }
+    @Test public void activityUsesPersianResources() {
+        try(ActivityScenario<MainActivity> scenario=ActivityScenario.launch(MainActivity.class)){
+            scenario.onActivity(activity->{assertEquals("fa",activity.getResources().getConfiguration().getLocales().get(0).getLanguage());assertNotNull(activity.root);});
+        }
     }
     @Test public void longPersianPoemProducesReadableMultipleImages() throws Exception {
         Context context=ApplicationProvider.getApplicationContext();
