@@ -1,0 +1,11 @@
+.gradle/
+**/build/
+local.properties
+app/src/main/assets/*.db
+app/src/main/assets/*.ttf
+app/src/main/assets/OFL.txt
+app/src/main/assets/data-version.json
+*.jks
+*.keystore
+__pycache__/
+dist/

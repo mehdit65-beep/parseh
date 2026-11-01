@@ -1,0 +1,22 @@
+plugins { id 'com.android.application' }
+android {
+    namespace 'ir.parseh.poetry'
+    compileSdk 35
+    defaultConfig {
+        applicationId 'ir.parseh.poetry'
+        minSdk 26
+        targetSdk 35
+        versionCode 1
+        versionName '0.1.0'
+    }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+    buildTypes { release { minifyEnabled false } }
+}
+tasks.register('verifyContent') {
+    doLast {
+        ['poetry.db', 'Vazirmatn.ttf', 'OFL.txt', 'data-version.json'].each {
+            if (!file("src/main/assets/$it").exists()) throw new GradleException("Missing $it: run python3 scripts/prepare.py --source /path/to/ganjoor-data")
+        }
+    }
+}
+tasks.named('preBuild').configure { dependsOn 'verifyContent' }

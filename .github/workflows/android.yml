@@ -1,0 +1,48 @@
+name: Android offline build
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Test importer
+        run: python3 -m unittest discover -s tests -v
+      - name: Fetch poetry and Persian font
+        run: |
+          git clone --depth 1 https://github.com/ganjoor/ganjoor-data.git "$RUNNER_TEMP/ganjoor-data"
+          python3 scripts/prepare.py --source "$RUNNER_TEMP/ganjoor-data"
+          curl --fail --location --retry 3 https://raw.githubusercontent.com/rastikerdar/vazirmatn/v33.003/fonts/ttf/Vazirmatn-Regular.ttf -o app/src/main/assets/Vazirmatn.ttf
+          curl --fail --location --retry 3 https://raw.githubusercontent.com/rastikerdar/vazirmatn/v33.003/OFL.txt -o app/src/main/assets/OFL.txt
+      - name: Build APK and run Android lint
+        run: gradle --no-daemon :app:assembleDebug :app:lintDebug
+      - name: Bundle handoff
+        run: |
+          mkdir -p dist
+          cp app/build/outputs/apk/debug/app-debug.apk dist/parseh-preview.apk
+          cp app/src/main/assets/data-version.json dist/
+          sha256sum dist/parseh-preview.apk > dist/SHA256SUMS
+          du -h dist/parseh-preview.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: parseh-android-preview
+          path: dist/
+          retention-days: 30
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: android-lint
+          path: app/build/reports/lint-results-debug.html
