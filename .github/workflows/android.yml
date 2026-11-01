@@ -66,6 +66,12 @@ jobs:
           key: corpus-${{ env.DATA_REVISION }}-${{ hashFiles('scripts/prepare.py') }}-vazirmatn-33.003
       - name: Build APK and run Android lint
         run: gradle --no-daemon :app:assembleDebug :app:lintDebug
+      - name: Report Android lint details
+        if: always()
+        run: |
+          if [ -f app/build/intermediates/lint_intermediate_text_report/debug/lintReportDebug/lint-results-debug.txt ]; then
+            cat app/build/intermediates/lint_intermediate_text_report/debug/lintReportDebug/lint-results-debug.txt
+          fi
       - name: Enable emulator acceleration
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules

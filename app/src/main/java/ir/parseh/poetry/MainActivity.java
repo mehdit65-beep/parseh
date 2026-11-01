@@ -25,19 +25,19 @@ public class MainActivity extends Activity {
     @Override public void onCreate(Bundle state) {
         super.onCreate(state); prefs=getSharedPreferences("personal",0);
         dark=prefs.getBoolean("dark",false); size=prefs.getFloat("size",21);
-        try {font=Typeface.createFromAsset(getAssets(),"Vazirmatn.ttf");} catch(Exception e){font=Typeface.create("sans-serif",0);}
+        try {font=Typeface.createFromAsset(getAssets(),"Vazirmatn.ttf");} catch(Exception e){font=Typeface.create("sans-serif",Typeface.NORMAL);}
         screen("پارسه"); label("کتابخانه در حال آماده‌شدن است…",18);
         worker.execute(()->{try {corpus=new Corpus(this);main.post(()->{if(!isDestroyed())home();});}
             catch(Exception e){main.post(()->{screen("پارسه");label("بانک اشعار در این فایل نصب موجود یا قابل خواندن نیست.",18);});}});
     }
     void screen(String title) {
         serial++; bg=Color.parseColor(dark?"#172522":"#F7F4ED");ink=Color.parseColor(dark?"#F7F4ED":"#243B35");
-        root=new LinearLayout(this);root.setOrientation(1);root.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);root.setBackgroundColor(bg);
+        root=new LinearLayout(this);root.setOrientation(LinearLayout.VERTICAL);root.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);root.setBackgroundColor(bg);
         root.setPadding(dp(20),dp(12),dp(20),dp(10));
         if(Build.VERSION.SDK_INT>=30)root.setOnApplyWindowInsetsListener((v,insets)->{android.graphics.Insets i=insets.getInsets(WindowInsets.Type.systemBars());v.setPadding(dp(20),dp(12)+i.top,dp(20),dp(10)+i.bottom);return insets;});
         setContentView(root);
         TextView heading=text(title,28);heading.setPadding(0,dp(12),0,dp(12));root.addView(heading);
-        ScrollView scroll=new ScrollView(this);content=new LinearLayout(this);content.setOrientation(1);scroll.setFillViewport(true);scroll.addView(content);
+        ScrollView scroll=new ScrollView(this);content=new LinearLayout(this);content.setOrientation(LinearLayout.VERTICAL);scroll.setFillViewport(true);scroll.addView(content);
         root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
         bar=new LinearLayout(this); root.addView(bar);
         nav("خانه",()->home());nav("جست‌وجو",()->search());nav("نشان‌ها",()->bookmarks());nav("تنظیمات",()->settings());
@@ -71,7 +71,7 @@ public class MainActivity extends Activity {
         button("پیش‌نمایش و اشتراک‌گذاری",()->{StringBuilder s=new StringBuilder();for(CheckBox c:checks)if(c.isChecked()){if(s.length()>0)s.append('\n');s.append(c.getText());}if(s.length()==0){toast("حداقل یک مصراع انتخاب کنید");return;}previewCard(s.toString(),p,theme.getSelectedItemPosition());});
     }
     void previewCard(String body,String[] poem,int theme){screen("پیش‌نمایش کارت");int[] backgrounds={0xfff7f4ed,0xff235d50,0xff172522};int[] foregrounds={0xff243b35,0xfff7f4ed,0xffeee6d3};
-        LinearLayout card=new LinearLayout(this);card.setOrientation(1);card.setPadding(dp(24),dp(32),dp(24),dp(32));card.setBackgroundColor(backgrounds[theme]);content.addView(card);
+        LinearLayout card=new LinearLayout(this);card.setOrientation(LinearLayout.VERTICAL);card.setPadding(dp(24),dp(32),dp(24),dp(32));card.setBackgroundColor(backgrounds[theme]);content.addView(card);
         for(String value:new String[]{body,poem[4]+" · "+poem[1],"پارسه | گنجور"}){TextView t=text(value,value.equals(body)?21:13);t.setGravity(Gravity.CENTER);t.setTextColor(foregrounds[theme]);card.addView(t);}
         label("متن بلند در چند تصویر شماره‌دار خروجی گرفته می‌شود.",13);button("اشتراک‌گذاری تصویر",()->export(body,poem,theme));}
     void shareText(String body,String[] p){Intent i=new Intent(Intent.ACTION_SEND);i.setType("text/plain");i.putExtra(Intent.EXTRA_TEXT,p[4]+" — "+p[1]+"\n\n"+body+"\n\nپارسه | گنجور\n"+p[3]);startActivity(Intent.createChooser(i,"اشتراک‌گذاری شعر"));}
