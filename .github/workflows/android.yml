@@ -4,7 +4,7 @@ on:
     branches: [main]
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -32,13 +32,39 @@ jobs:
           curl --fail --location --retry 3 https://raw.githubusercontent.com/rastikerdar/vazirmatn/v33.003/OFL.txt -o app/src/main/assets/OFL.txt
       - name: Build APK and run Android lint
         run: gradle --no-daemon :app:assembleDebug :app:lintDebug
+      - name: Enable emulator acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Test offline corpus and image sharing on Android
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 29
+          arch: x86_64
+          disable-animations: true
+          script: |
+            adb shell svc wifi disable
+            adb shell svc data disable
+            gradle --no-daemon :app:connectedDebugAndroidTest
+            adb shell am start -n ir.parseh.poetry/.MainActivity
+            sleep 3
+            adb shell screencap -p /sdcard/parseh-home.png
+            adb pull /sdcard/parseh-home.png parseh-home.png
       - name: Bundle handoff
         run: |
           mkdir -p dist
           cp app/build/outputs/apk/debug/app-debug.apk dist/parseh-preview.apk
           cp app/src/main/assets/data-version.json dist/
+          cp parseh-home.png dist/
           sha256sum dist/parseh-preview.apk > dist/SHA256SUMS
           du -h dist/parseh-preview.apk
+      - name: Publish downloadable preview
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 scripts/release_notes.py > dist/RELEASE_NOTES.md
+          gh release create "preview-${GITHUB_SHA:0:8}" dist/parseh-preview.apk dist/data-version.json dist/SHA256SUMS --target "$GITHUB_SHA" --title "پارسه — نسخهٔ آزمایشی ${GITHUB_SHA:0:8}" --prerelease --notes-file dist/RELEASE_NOTES.md
       - uses: actions/upload-artifact@v4
         with:
           name: parseh-android-preview
@@ -49,3 +75,8 @@ jobs:
         with:
           name: android-lint
           path: app/build/reports/lint-results-debug.html
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: android-device-tests
+          path: app/build/reports/androidTests/
