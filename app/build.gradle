@@ -1,4 +1,6 @@
 plugins { id 'com.android.application' }
+def pushEnabled = file('google-services.json').exists()
+if (pushEnabled) apply plugin: 'com.google.gms.google-services'
 android {
     namespace 'ir.parseh.poetry'
     compileSdk 35
@@ -8,9 +10,21 @@ android {
         targetSdk 35
         versionCode 1
         versionName '0.1.0'
+        buildConfigField 'boolean', 'PUSH_ENABLED', pushEnabled.toString()
+    }
+    buildFeatures { buildConfig true }
+    if (pushEnabled) {
+        sourceSets.main.java.srcDir 'src/push/java'
+        sourceSets.main.manifest.srcFile 'src/push/AndroidManifest.xml'
     }
     compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
     buildTypes { release { minifyEnabled false } }
+}
+if (pushEnabled) {
+    dependencies {
+        implementation platform('com.google.firebase:firebase-bom:33.7.0')
+        implementation 'com.google.firebase:firebase-messaging'
+    }
 }
 tasks.register('verifyContent') {
     doLast {

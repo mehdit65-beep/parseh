@@ -83,10 +83,15 @@ public class MainActivity extends Activity {
         label("اندازهٔ متن شعر",17);SeekBar seek=new SeekBar(this);seek.setMax(16);seek.setProgress((int)size-16);content.addView(seek);seek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){public void onProgressChanged(SeekBar s,int v,boolean user){size=16+v;prefs.edit().putFloat("size",size).apply();}public void onStartTrackingTouch(SeekBar s){} public void onStopTrackingTouch(SeekBar s){}});
         button(prefs.getBoolean("reminder",false)?"خاموش‌کردن یادآوری روزانه":"فعال‌کردن یادآوری روزانه",()->{if(prefs.getBoolean("reminder",false)){prefs.edit().putBoolean("reminder",false).apply();ReminderReceiver.schedule(this);settings();return;}if(Build.VERSION.SDK_INT>=33&&checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)!=PackageManager.PERMISSION_GRANTED){requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS},7);return;}pickTime();});
         label("یادآوری روزانه روی همین دستگاه اجرا می‌شود. زمان نمایش ممکن است با مدیریت باتری تغییر کند.",14);
+        if(BuildConfig.PUSH_ENABLED)button(prefs.getBoolean("push",false)?"خاموش‌کردن پیام‌های پارسه":"دریافت پیام‌های پارسه",()->{
+            if(Build.VERSION.SDK_INT>=33&&checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)!=PackageManager.PERMISSION_GRANTED){requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS},8);return;}
+            togglePush();
+        });else label("پیام‌های ارسالی پارسه در این نسخه فعال نیست.",14);
         label("پارسه · نسخهٔ آزمایشی ۰٫۱\nاشعار: ganjoor.net\nقلم: وزیرمتن — مجوز OFL\nبدون حساب کاربری و بدون ارسال اطلاعات شخصی",14);
     }
     void pickTime(){new TimePickerDialog(this,(v,h,m)->{prefs.edit().putInt("hour",h).putInt("minute",m).putBoolean("reminder",true).apply();ReminderReceiver.schedule(this);settings();},prefs.getInt("hour",20),prefs.getInt("minute",0),true).show();}
-    @Override public void onRequestPermissionsResult(int request,String[] permissions,int[] grants){super.onRequestPermissionsResult(request,permissions,grants);if(request==7&&grants.length>0&&grants[0]==PackageManager.PERMISSION_GRANTED)pickTime();else toast("مجوز اعلان داده نشد؛ می‌توانید بعداً فعال کنید.");}
+    void togglePush(){try{Class.forName("ir.parseh.poetry.PushBridge").getMethod("toggle",MainActivity.class).invoke(null,this);}catch(Exception e){toast("سرویس پیام در دسترس نیست.");}}
+    @Override public void onRequestPermissionsResult(int request,String[] permissions,int[] grants){super.onRequestPermissionsResult(request,permissions,grants);if(grants.length>0&&grants[0]==PackageManager.PERMISSION_GRANTED){if(request==7)pickTime();else if(request==8)togglePush();}else toast("مجوز اعلان داده نشد؛ می‌توانید بعداً فعال کنید.");}
     void toast(String s){Toast.makeText(this,s,Toast.LENGTH_LONG).show();}
     @Override public void onBackPressed(){if(corpus!=null)home();else super.onBackPressed();}
     @Override public void onDestroy(){serial++;worker.shutdown();super.onDestroy();}

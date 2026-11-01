@@ -9,3 +9,5 @@ app/src/main/assets/data-version.json
 *.keystore
 __pycache__/
 dist/
+app/google-services.json
+*service-account*.json
