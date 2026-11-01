@@ -35,7 +35,9 @@ final class Corpus {
     }
     static String match(String s) {
         StringBuilder b = new StringBuilder();
-        for(String word:normalize(s).split(" ")) if(!word.isEmpty()) { if(b.length()>0)b.append(" AND "); b.append('"').append(word.replace("\"","\"\"")).append('"'); }
+        // Whitespace is implicit AND in both standard and enhanced FTS4 syntax.
+        // Android builds may treat the explicit AND keyword as a literal word.
+        for(String word:normalize(s).split(" ")) if(!word.isEmpty()) { if(b.length()>0)b.append(' '); b.append('"').append(word.replace("\"","\"\"")).append('"'); }
         return b.toString();
     }
 }
