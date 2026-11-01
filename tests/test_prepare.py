@@ -26,7 +26,7 @@ class ImportTests(unittest.TestCase):
             with sqlite3.connect(root / 'output/poetry.db') as db:
                 self.assertEqual(db.execute('SELECT body FROM poems').fetchone()[0], 'كِتاب يار\nدل')
                 self.assertEqual(db.execute('SELECT docid FROM search WHERE search MATCH ?', ('"کتاب" AND "یار"',)).fetchone()[0], 2130)
-                self.assertEqual(db.execute('PRAGMA integrity_check').fetchone()[0], 'ok')
+                prepare.check_database(db)
             self.assertEqual(report['poems'], 1)
             self.assertEqual(len(report['sha256']), 64)
 
