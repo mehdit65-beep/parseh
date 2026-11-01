@@ -9,6 +9,7 @@ import java.util.*;
 final class Corpus {
     private final SQLiteDatabase db;
     Corpus(Context context) throws IOException {
+        synchronized(Corpus.class) {
         File target = context.getDatabasePath("poetry.db");
         target.getParentFile().mkdirs();
         if (!target.exists()) {
@@ -20,6 +21,7 @@ final class Corpus {
             if (!temp.renameTo(target)) throw new IOException("Database installation failed");
         }
         db = SQLiteDatabase.openDatabase(target.getPath(), null, SQLiteDatabase.OPEN_READONLY);
+        }
     }
     List<String[]> query(String sql, String... args) {
         List<String[]> rows = new ArrayList<>();
