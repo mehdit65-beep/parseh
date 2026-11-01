@@ -5,6 +5,8 @@ on:
   workflow_dispatch:
 permissions:
   contents: write
+env:
+  DATA_REVISION: 34f4ab3e463903f9399d7ca208b9333911389f94
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -24,12 +26,44 @@ jobs:
           gradle-version: '8.9'
       - name: Test importer
         run: python3 -m unittest discover -s tests -v
-      - name: Fetch poetry and Persian font
+      - name: Restore corpus assets
+        id: assets
+        uses: actions/cache/restore@v4
+        with:
+          path: app/src/main/assets/
+          key: corpus-${{ env.DATA_REVISION }}-${{ hashFiles('scripts/prepare.py') }}-vazirmatn-33.003
+      - name: Restore source export
+        if: steps.assets.outputs.cache-hit != 'true'
+        id: source
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/ganjoor-data
+          key: ganjoor-source-${{ env.DATA_REVISION }}
+      - name: Fetch pinned poetry export
+        if: steps.assets.outputs.cache-hit != 'true' && steps.source.outputs.cache-hit != 'true'
         run: |
-          git clone --depth 1 https://github.com/ganjoor/ganjoor-data.git "$RUNNER_TEMP/ganjoor-data"
+          git init "$RUNNER_TEMP/ganjoor-data"
+          git -C "$RUNNER_TEMP/ganjoor-data" remote add origin https://github.com/ganjoor/ganjoor-data.git
+          git -C "$RUNNER_TEMP/ganjoor-data" fetch --depth 1 origin "$DATA_REVISION"
+          git -C "$RUNNER_TEMP/ganjoor-data" checkout FETCH_HEAD
+      - name: Cache source export
+        if: steps.assets.outputs.cache-hit != 'true' && steps.source.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ runner.temp }}/ganjoor-data
+          key: ganjoor-source-${{ env.DATA_REVISION }}
+      - name: Prepare offline poetry and Persian font
+        if: steps.assets.outputs.cache-hit != 'true'
+        run: |
           python3 scripts/prepare.py --source "$RUNNER_TEMP/ganjoor-data"
           curl --fail --location --retry 3 https://raw.githubusercontent.com/rastikerdar/vazirmatn/v33.003/fonts/ttf/Vazirmatn-Regular.ttf -o app/src/main/assets/Vazirmatn.ttf
           curl --fail --location --retry 3 https://raw.githubusercontent.com/rastikerdar/vazirmatn/v33.003/OFL.txt -o app/src/main/assets/OFL.txt
+      - name: Cache offline assets
+        if: steps.assets.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: app/src/main/assets/
+          key: corpus-${{ env.DATA_REVISION }}-${{ hashFiles('scripts/prepare.py') }}-vazirmatn-33.003
       - name: Build APK and run Android lint
         run: gradle --no-daemon :app:assembleDebug :app:lintDebug
       - name: Enable emulator acceleration

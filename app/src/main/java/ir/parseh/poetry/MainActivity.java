@@ -58,7 +58,7 @@ public class MainActivity extends Activity {
     void poemList(String sql,String... args){load(sql,rows->{if(rows.isEmpty())label("شعری یافت نشد.",16);else appendPage(rows,0);},args);}
     void appendPage(List<String[]> rows,int start){int end=Math.min(start+60,rows.size());for(int i=start;i<end;i++){String[] r=rows.get(i);button(r[1],()->poem(Integer.parseInt(r[0])));}if(end<rows.size()){button("نمایش بیشتر",()->{content.removeViewAt(content.getChildCount()-1);appendPage(rows,end);});}}
     void poem(int id){screen("در حال خواندن…");load("SELECT p.id,p.title,p.body,p.url,a.name,p.source FROM poems p JOIN poets a ON a.id=p.poet WHERE p.id=?",rows->{if(rows.isEmpty())return;current=rows.get(0);prefs.edit().putInt("last",id).apply();reader();},""+id);}
-    void reader(){String[] p=current;screen(p[4]);label(p[1],22);TextView body=label(p[2],size);body.setGravity(Gravity.CENTER);body.setTextIsSelectable(true);
+    void reader(){String[] p=current;screen(p[4]);label(p[1],22);if(p[2].trim().isEmpty()){label("متن این مدخل در نسخهٔ منبع گنجور موجود نیست.",18);return;}TextView body=label(p[2],size);body.setGravity(Gravity.CENTER);body.setTextIsSelectable(true);
         button("اشتراک‌گذاری کل شعر — متن",()->shareText(p[2],p));
         button("اشتراک‌گذاری کل شعر — تصویر",()->export(p[2],p,0));
         button("ساخت کارت‌پستال از شعر",()->postcard(p));

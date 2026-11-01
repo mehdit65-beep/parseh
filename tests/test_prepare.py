@@ -41,6 +41,18 @@ class ImportTests(unittest.TestCase):
     def test_normalize(self):
         self.assertEqual(prepare.normalize(' كِتابِ\u200cيـار  '), 'کتاب یار')
 
+    def test_empty_source_entry_is_preserved_and_reported(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.source(root)
+            file = root / 'poets/hafez/ghazal/sh1.json'
+            entry = json.loads(file.read_text())
+            entry['Verses'] = []
+            file.write_text(json.dumps(entry))
+            report = prepare.build(root, root / 'poetry.db')
+            self.assertEqual(report['poems'], 1)
+            self.assertEqual(report['empty_poems'], 1)
+
 
 if __name__ == '__main__':
     unittest.main()

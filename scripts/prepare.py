@@ -39,14 +39,13 @@ def build(source, output, strict=True):
             elif 'Verses' in item:
                 verses = sorted(item['Verses'], key=lambda v: v['VOrder'])
                 body = '\n'.join(v['Text'] for v in verses)
-                if not body.strip():
-                    raise ValueError(f'Empty poem: {path}')
                 db.execute('INSERT INTO poems VALUES(?,?,?,?,?,?,?)',
                            (item['Id'], poet['Id'], item['CatId'], item['Title'], body,
                             'https://ganjoor.net' + item['FullUrl'], item.get('SourceName', 'گنجور')))
                 db.execute('INSERT INTO search(docid,title,body) VALUES(?,?,?)',
                            (item['Id'], normalize(item['Title']), normalize(body)))
     counts = {t: db.execute(f'SELECT count(*) FROM {t}').fetchone()[0] for t in ('poets', 'poems')}
+    counts['empty_poems'] = db.execute("SELECT count(*) FROM poems WHERE trim(body) = ''").fetchone()[0]
     if strict and (counts['poets'] != manifest['PoetsCount'] or counts['poems'] != manifest['PoemsCount']):
         raise ValueError(f'Incomplete export: {counts}; expected {manifest["PoetsCount"]} poets / {manifest["PoemsCount"]} poems')
     if db.execute('SELECT count(*) FROM poems p LEFT JOIN categories c ON c.id=p.category WHERE c.id IS NULL').fetchone()[0]:
